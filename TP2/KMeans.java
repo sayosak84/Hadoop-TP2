@@ -31,9 +31,10 @@ public class KMeans
 		SequenceFile.Reader.Option seqInput = SequenceFile.Reader.file(path);
 		try {
 			SequenceFile.Reader reader = new SequenceFile.Reader(config, seqInput);
-			BaryWritable baryWritable = (BaryWritable) ReflectionUtils.newInstance(reader.getKeyClass(), config);
-			while (reader.next(baryWritable)){
-				listBarycenters.add(baryWritable);
+			IntWritable key = (IntWritable) ReflectionUtils.newInstance(reader.getKeyClass(), config);
+			BaryWritable baryWritableValue = (BaryWritable) ReflectionUtils.newInstance(reader.getValueClass(), config);
+			while (reader.next(key, baryWritableValue)){
+				listBarycenters.add(baryWritableValue);
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
