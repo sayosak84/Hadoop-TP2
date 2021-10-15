@@ -4,6 +4,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapred.WordCount;
 import org.apache.hadoop.mapreduce.Job;
@@ -11,7 +12,9 @@ import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.apache.hadoop.util.ReflectionUtils;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,9 +28,16 @@ public class KMeans
 	public static List<BaryWritable> readBarycenters (Configuration config, String filename){
 		List<BaryWritable> listBarycenters = new ArrayList<>();
 		Path path = new Path(config.get(PROP_BARY_PATH)+"/"+filename);
-
-
-
+		SequenceFile.Reader.Option seqInput = SequenceFile.Reader.file(path);
+		try {
+			SequenceFile.Reader reader = new SequenceFile.Reader(config, seqInput);
+			BaryWritable baryWritable = (BaryWritable) ReflectionUtils.newInstance(reader.getKeyClass(), config);
+			while (reader.next(baryWritable)){
+				listBarycenters.add(baryWritable);
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 		return listBarycenters;
 	}
 
@@ -37,8 +47,8 @@ public class KMeans
 
 		// on définie nos classes
 		job.setJarByClass(WordCount.class);
-		job.setMapperClass(WordCountMapper.class);
-		job.setReducerClass(WordCountReducer.class);
+		//job.setMapperClass(WordCountMapper.class);
+		//job.setReducerClass(WordCountReducer.class);
 
 		job.setOutputKeyClass(Text.class);
 		job.setOutputValueClass(IntWritable.class);
