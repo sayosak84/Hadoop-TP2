@@ -1,6 +1,7 @@
 package TP2;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
@@ -40,6 +41,20 @@ public class KMeans
 			e.printStackTrace();
 		}
 		return listBarycenters;
+	}
+
+	public void recordBarycenters(Configuration config, String filename, List<BaryWritable> barycenters){
+		Path path = new Path(config.get(PROP_BARY_PATH)+"/"+filename);
+		try {
+			FileSystem fs = FileSystem.get(config);
+			if(fs.exists(path)) fs.delete(path, true);
+			SequenceFile.Writer out = SequenceFile.createWriter(config, SequenceFile.Writer.file(path), SequenceFile.Writer.keyClass(IntWritable.class), SequenceFile.Writer.valueClass(BaryWritable.class));
+			for (BaryWritable bary : barycenters){
+				out.append(bary.getClusterId(),bary);
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	public static void main(String[] args) throws Exception{
