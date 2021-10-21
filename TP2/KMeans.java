@@ -58,7 +58,7 @@ public class KMeans
 	}
 
 	public static void main(String[] args) throws Exception{
-		Configuration config = new Configuration();
+		/*Configuration config = new Configuration();
 		Job job = Job.getInstance(config, "Custom Word Count Program");
 
 		// on définie nos classes
@@ -70,7 +70,8 @@ public class KMeans
 		job.setOutputValueClass(BaryWritable.class);
 		FileInputFormat.addInputPath(job, new Path(args[0]));
 		FileOutputFormat.setOutputPath(job, new Path(args[1]));
-		System.exit(job.waitForCompletion(true) ? 0 : 1);
+		System.exit(job.waitForCompletion(true) ? 0 : 1);*/
+		KMeansMapper k = new KMeansMapper();
 	}
 
 
