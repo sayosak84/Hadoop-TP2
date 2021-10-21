@@ -71,8 +71,4 @@ public class BaryWritable extends PointWritable implements WritableComparable {
         }
     }
 
-    /*Enfin, écrivez une méthode void add(PointWritable point) qui ajoute aux coordonnées
-    de this celles du point passé en paramètre, et void divideBy(int size) qui divise les
-    coordonnées de this par la valeur size passée en paramètre.*/
-
 }
