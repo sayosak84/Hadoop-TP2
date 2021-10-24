@@ -29,7 +29,7 @@ public class BaryWritable extends PointWritable implements WritableComparable {
     }
 
     public void readFields(DataInput din) throws IOException {
-        this.clusterId =(int) din.readDouble();
+        this.clusterId = (int) din.readDouble();
         super.readFields(din);
     }
 
@@ -37,17 +37,17 @@ public class BaryWritable extends PointWritable implements WritableComparable {
     public int compareTo(Object o) {
         BaryWritable bary = (BaryWritable) o;
         int baryClusterID = bary.getClusterId();
-        if (this.clusterId > baryClusterID){
+        if (this.clusterId > baryClusterID) {
             return 1;
-        }  else if (this.clusterId < baryClusterID){
+        } else if (this.clusterId < baryClusterID) {
             return -1;
-        } else{
+        } else {
             return 0;
         }
     }
 
     public boolean equals(Object o) {
-        if (compareTo(o) == 0){
+        if (compareTo(o) == 0) {
             return true;
         }
         return false;
@@ -57,16 +57,16 @@ public class BaryWritable extends PointWritable implements WritableComparable {
         return "clusterID : " + String.valueOf(this.clusterId);
     }
 
-    void add(PointWritable point){
+    void add(PointWritable point) {
         int coordSize = this.coordinates.length;
-        for (int i = 0; i < coordSize; i++){
-            coordinates[i] += point.coordinates[i] ;
+        for (int i = 0; i < coordSize; i++) {
+            coordinates[i] += point.coordinates[i];
         }
     }
 
-    void divideBy(int size){
+    void divideBy(int size) {
         int coordSize = this.coordinates.length;
-        for (int i = 0; i < coordSize; i++){
+        for (int i = 0; i < coordSize; i++) {
             coordinates[i] = coordinates[i] / size;
         }
     }

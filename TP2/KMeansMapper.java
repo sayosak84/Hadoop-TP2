@@ -10,14 +10,14 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class KMeansMapper extends Mapper<LongWritable, Text, IntWritable, BaryWritable>{
+public class KMeansMapper extends Mapper<LongWritable, Text, IntWritable, BaryWritable> {
     private List<BaryWritable> barycenters = new ArrayList<>();
 
     @Override
     protected void setup(Mapper<LongWritable, Text, IntWritable, BaryWritable>.Context context) throws IOException, InterruptedException {
         super.setup(context);
         Configuration conf = context.getConfiguration();
-        barycenters = KMeans.readBarycenters(conf,"all");
+        barycenters = KMeans.readBarycenters(conf, "all");
     }
 
     @Override
@@ -26,16 +26,16 @@ public class KMeansMapper extends Mapper<LongWritable, Text, IntWritable, BaryWr
         PointWritable point = new PointWritable(value.toString());
         double lowDistance = Double.MAX_VALUE;
         BaryWritable closestBarycenter = barycenters.get(0);
-        for (BaryWritable barycenter : barycenters){
+        for (BaryWritable barycenter : barycenters) {
             double distance = barycenter.computeDistance(point);
-            if (lowDistance > distance){
+            if (lowDistance > distance) {
                 lowDistance = distance;
                 closestBarycenter = barycenter;
             }
         }
 
-        IntWritable outKey = new IntWritable (closestBarycenter.getClusterId());
-        BaryWritable outVal= closestBarycenter;
+        IntWritable outKey = new IntWritable(closestBarycenter.getClusterId());
+        BaryWritable outVal = closestBarycenter;
         context.write(outKey, outVal);
 
     }
