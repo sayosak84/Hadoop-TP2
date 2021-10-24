@@ -2,15 +2,12 @@ package TP2;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.LocatedFileStatus;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.RemoteIterator;
 import org.apache.hadoop.io.IntWritable;
-import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.SequenceFile;
-import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapred.WordCount;
 import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.Mapper;
-import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.shaded.org.jline.utils.InputStreamReader;
@@ -48,7 +45,7 @@ public class KMeans {
         Path path = new Path(config.get(PROP_BARY_PATH) + "/" + filename);
         try {
             FileSystem fs = FileSystem.get(config);
-            if (fs.exists(path)) fs.delete(path, true);
+            if (fs.exists(path)) fs.delete(path, true);    // effacer le fichier s'il existe
             SequenceFile.Writer out = SequenceFile.createWriter(config, SequenceFile.Writer.file(path), SequenceFile.Writer.keyClass(IntWritable.class), SequenceFile.Writer.valueClass(BaryWritable.class));
             for (BaryWritable bary : barycenters) {
                 out.append(bary.getClusterId(), bary);
@@ -59,7 +56,6 @@ public class KMeans {
     }
 
     public static void initBarycenters(String fin, Configuration config, int k) {
-
         List<BaryWritable> barycenters = new ArrayList<>();
 
         Path path = new Path(fin);
@@ -68,44 +64,68 @@ public class KMeans {
             BufferedReader br = new BufferedReader(new InputStreamReader(fs.open(path)));
             for (int i = 0; i < k; i++) {
                 String line = br.readLine();
-                if (i == 0) {
+                if (i == 0) {     // eviter la premiere ligne
                     continue;
                 }
-                String[] coordinates = line.split(",");
-                int coordSize = coordinates.length;
-                BaryWritable barycenter = new BaryWritable();
-                barycenter.coordinates = new double[coordSize];
-                for (int j = 0; j < coordSize; j++) {
-                    barycenter.coordinates[j] = Double.parseDouble(coordinates[j]);
-                }
+
+                PointWritable tmpPoint = new PointWritable(line);
+                BaryWritable barycenter = new BaryWritable(tmpPoint.getCoordinates(),i);
+
                 barycenters.add(barycenter);
             }
 
             recordBarycenters(config, "all", barycenters);
 
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void updateBarycenters(Configuration config){
+        try {
+            Path path = new Path(config.get(PROP_BARY_PATH) + "/" );
+            FileSystem fs = FileSystem.get(config);
+            RemoteIterator<LocatedFileStatus> files = fs.listFiles(path, false);
+
+            while (files.hasNext()){
+                Path filePath = files.next().getPath();
+                String filename = filePath.getName();              // on recupere le nom du fichier seulement
+                List<BaryWritable> baryCenters = readBarycenters(config,filename);
+                fs.delete(filePath, true);
+                recordBarycenters(config,"all",baryCenters);
+            }
 
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
 
+    public Job setupJob(int iteration, String fin, String fout) throws Exception {
+        Configuration config = new Configuration();
 
+        Path baryPath = new Path("tmp/barycenters");
+        config.set(PROP_BARY_PATH, baryPath.toString());
+
+        Job job = Job.getInstance(config, "Job iteration : "+ String.valueOf(iteration));
+
+        // on définie nos classes
+        job.setJarByClass(KMeans.class);
+        job.setJarByClass(BaryWritable.class);
+        job.setJarByClass(PointWritable.class);
+        job.setMapperClass(KMeansMapper.class);
+        job.setReducerClass(KMeansReducer.class);
+
+        // on définie les types de sortie
+        job.setOutputKeyClass(IntWritable.class);
+        job.setOutputValueClass(BaryWritable.class);
+
+        FileInputFormat.addInputPath(job, new Path(fin));
+        FileOutputFormat.setOutputPath(job, new Path(fout));
+
+        return job;
     }
 
     public static void main(String[] args) throws Exception {
-		/*Configuration config = new Configuration();
-		Job job = Job.getInstance(config, "Custom Word Count Program");
-
-		// on définie nos classes
-		job.setJarByClass(WordCount.class);
-		//job.setMapperClass(WordCountMapper.class);
-		//job.setReducerClass(WordCountReducer.class);
-
-		job.setOutputKeyClass(IntWritable.class);
-		job.setOutputValueClass(BaryWritable.class);
-		FileInputFormat.addInputPath(job, new Path(args[0]));
-		FileOutputFormat.setOutputPath(job, new Path(args[1]));
-		System.exit(job.waitForCompletion(true) ? 0 : 1);*/
-        KMeansMapper k = new KMeansMapper();
     }
 
 
